@@ -36,12 +36,19 @@ Motores
 
 La aplicación interpreta el comando de voz y envía el carácter correspondiente mediante Bluetooth. Arduino recibe el comando y controla los motores del carro.
 
-# Comandos que envia
-F => Adelante
-B => Atras
-L => Izquierda
-R => Derecha
-S => Detener
+# Comandos enviados
+* F => Adelante
+* B => Atras
+* L => Izquierda
+* R => Derecha
+* S => Detener
+
+# Instrucciones de voz
+* Adelante
+* Atras
+* Izquierda
+* Derecha
+* Detener, Alto, Detente, Para, Parar
 
 Proximamente añadire una seccion para personalizar los comandos sin tocar codigo
 

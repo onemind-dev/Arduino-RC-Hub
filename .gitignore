@@ -15,3 +15,10 @@ android/build/
 .AppleDouble
 .LSOverride
 android/app/release/
+echo "android/app/src/main/res/drawable-*/" >> .gitignore
+echo "android/app/src/main/res/mipmap-*/" >> .gitignore
+echo "assets/" >> .gitignore
+echo "icons/" >> .gitignore
+git add .gitignore
+git commit -m "Ignorar recursos graficos autogenerados"
+git push origin main

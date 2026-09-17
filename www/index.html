@@ -1,33 +1,103 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Arduino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Arduino RC Hub</title>
     <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
+<div class="app-container">
+    
+    <header id="encabezado">
+        <h1>Arduino RC Hub</h1>
+        <div class="top-buttons">
+            <button id="Conectar">Conectar</button>
+            <button id="Hablar">Hablar</button>
+            <button id="BtnConfig" class="btn-secundario" aria-label="Configuración">⚙️</button>
+        </div>
+    </header>
 
-<h2>Control Arduino </h2>
+    <main id="cuerpo">
+        <div class="control-grid">
+            <div></div>
+            <button id="Adelante" class="btn-dir" aria-label="Adelante">▲</button>
+            <div></div>
 
-<button id="Conectar">Conectar Bluetooth</button>
-<button id="Hablar">🎤 Hablar</button>
-<div class="grid">
-    <div></div>
-    <button id="Adelante">Adelante</button>
-    <div></div>
-    <button id="Izq">Izquierda</button>
-    <button id="Parar" class="stop">PARAR</button>
-    <button id="Derecha">Derecha</button>
-    <div></div>
-    <button id="Atras">Atras</button>
-    <div></div>
+            <button id="Izq" class="btn-dir" aria-label="Izquierda">◀</button>
+            <button id="Parar" class="stop">STOP</button>
+            <button id="Derecha" class="btn-dir" aria-label="Derecha">▶</button>
+
+            <div></div>
+            <button id="Atras" class="btn-dir" aria-label="Atrás">▼</button>
+            <div></div>
+        </div>
+    </main>
+
+    <section class="status-container">
+        <p id="Estado" class="status">Estado: Listo</p>
+        <p id="Textovoz" class="status">Voz: Inactiva</p>
+    </section>
+
+    <section id="configuracion" class="config-panel hidden">
+        <div class="config-header">
+            <h2>Configuración</h2>
+            <button id="CerrarConfig" aria-label="Cerrar">✕</button>
+        </div>
+        
+        <div class="config-body">
+            <fieldset class="config-group">
+                <legend>Comandos Bluetooth</legend>
+                <div class="input-group">
+                    <label for="cmd-adelante">Adelante</label>
+                    <input type="text" id="cmd-adelante" placeholder="F" oninput="actualizarComandoBT('adelante', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="cmd-atras">Atrás</label>
+                    <input type="text" id="cmd-atras" placeholder="B" oninput="actualizarComandoBT('atras', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="cmd-izquierda">Izquierda</label>
+                    <input type="text" id="cmd-izquierda" placeholder="L" oninput="actualizarComandoBT('izquierda', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="cmd-derecha">Derecha</label>
+                    <input type="text" id="cmd-derecha" placeholder="R" oninput="actualizarComandoBT('derecha', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="cmd-detener">Detener</label>
+                    <input type="text" id="cmd-detener" placeholder="S" oninput="actualizarComandoBT('detener', this.value)">
+                </div>
+            </fieldset>
+
+            <fieldset class="config-group">
+                <legend>Instrucciones de Voz</legend>
+                <div class="input-group">
+                    <label for="voz-adelante">Adelante</label>
+                    <input type="text" id="voz-adelante" placeholder="adelante" oninput="actualizarInstruccionVoz('adelante', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="voz-atras">Atrás</label>
+                    <input type="text" id="voz-atras" placeholder="retrocede" oninput="actualizarInstruccionVoz('atras', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="voz-izquierda">Izquierda</label>
+                    <input type="text" id="voz-izquierda" placeholder="izquierda" oninput="actualizarInstruccionVoz('izquierda', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="voz-derecha">Derecha</label>
+                    <input type="text" id="voz-derecha" placeholder="derecha" oninput="actualizarInstruccionVoz('derecha', this.value)">
+                </div>
+                <div class="input-group">
+                    <label for="voz-detener">Detener</label>
+                    <input type="text" id="voz-detener" placeholder="alto" oninput="actualizarInstruccionVoz('detener', this.value)">
+                </div>
+            </fieldset>
+        </div>
+    </section>
+
 </div>
-
-
-
-<p id="Estado" class="status">Estado: Listo</p>
-<p id="Textovoz" class="status">Voz: Inactiva</p>
 
 <script src="js/index.js"></script>
 </body>

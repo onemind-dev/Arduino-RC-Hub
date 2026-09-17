@@ -14,3 +14,4 @@ android/build/
 .DS_Store
 .AppleDouble
 .LSOverride
+android/app/release/

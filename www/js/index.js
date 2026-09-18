@@ -2,13 +2,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const estado = document.getElementById("Estado");
     const textoVoz = document.getElementById("Textovoz");
+    const btnHablar = document.getElementById("Hablar");
 
-    // Variables de control de estado y comunicación
     let estaConectado = false;
     let ultimoComandoEnviado = "";
     let enviandoEnProceso = false;
 
-    // Valores por defecto si localStorage está vacío o si un input queda en blanco
+    const moduloBTDefecto = "HC-05";
+
     const comandosDefectoBT = {
         adelante: "F",
         atras: "B",
@@ -25,50 +26,67 @@ document.addEventListener("DOMContentLoaded", () => {
         detener: "alto"
     };
 
-    // Cargar datos desde localStorage o usar valores por defecto
     function cargarConfiguracion() {
+        const moduloGuardado = localStorage.getItem("rc_modulo_bt");
         const btGuardado = localStorage.getItem("rc_comandos_bt");
         const vozGuardada = localStorage.getItem("rc_instrucciones_voz");
 
+        window.moduloBluetooth = (moduloGuardado && moduloGuardado.trim() !== "") ? moduloGuardado.trim() : moduloBTDefecto;
         window.comandosBT = btGuardado ? JSON.parse(btGuardado) : { ...comandosDefectoBT };
         window.instruccionesVoz = vozGuardada ? JSON.parse(vozGuardada) : { ...instruccionesDefectoVoz };
 
         poblarInputs();
     }
 
-    // Llenar los inputs de la vista de configuración
     function poblarInputs() {
-        document.getElementById("cmd-adelante").value = window.comandosBT.adelante || comandosDefectoBT.adelante;
-        document.getElementById("cmd-atras").value = window.comandosBT.atras || comandosDefectoBT.atras;
-        document.getElementById("cmd-izquierda").value = window.comandosBT.izquierda || comandosDefectoBT.izquierda;
-        document.getElementById("cmd-derecha").value = window.comandosBT.derecha || comandosDefectoBT.derecha;
-        document.getElementById("cmd-detener").value = window.comandosBT.detener || comandosDefectoBT.detener;
+        const inputModulo = document.getElementById("modulo-bt");
+        if (inputModulo) inputModulo.value = window.moduloBluetooth;
 
-        document.getElementById("voz-adelante").value = window.instruccionesVoz.adelante || instruccionesDefectoVoz.adelante;
-        document.getElementById("voz-atras").value = window.instruccionesVoz.atras || instruccionesDefectoVoz.atras;
-        document.getElementById("voz-izquierda").value = window.instruccionesVoz.izquierda || instruccionesDefectoVoz.izquierda;
-        document.getElementById("voz-derecha").value = window.instruccionesVoz.derecha || instruccionesDefectoVoz.derecha;
-        document.getElementById("voz-detener").value = window.instruccionesVoz.detener || instruccionesDefectoVoz.detener;
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        setVal("cmd-adelante", window.comandosBT.adelante || comandosDefectoBT.adelante);
+        setVal("cmd-atras", window.comandosBT.atras || comandosDefectoBT.atras);
+        setVal("cmd-izquierda", window.comandosBT.izquierda || comandosDefectoBT.izquierda);
+        setVal("cmd-derecha", window.comandosBT.derecha || comandosDefectoBT.derecha);
+        setVal("cmd-detener", window.comandosBT.detener || comandosDefectoBT.detener);
+
+        setVal("voz-adelante", window.instruccionesVoz.adelante || instruccionesDefectoVoz.adelante);
+        setVal("voz-atras", window.instruccionesVoz.atras || instruccionesDefectoVoz.atras);
+        setVal("voz-izquierda", window.instruccionesVoz.izquierda || instruccionesDefectoVoz.izquierda);
+        setVal("voz-derecha", window.instruccionesVoz.derecha || instruccionesDefectoVoz.derecha);
+        setVal("voz-detener", window.instruccionesVoz.detener || instruccionesDefectoVoz.detener);
     }
 
-    // Guardar comandos BT controlando que NO se guarden campos vacíos
+    const inputModuloBT = document.getElementById("modulo-bt");
+    if (inputModuloBT) {
+        inputModuloBT.addEventListener("input", (e) => {
+            window.actualizarModuloBT(e.target.value);
+        });
+    }
+
+    window.actualizarModuloBT = function(valor) {
+        const valorLimpio = valor ? valor.trim() : "";
+        window.moduloBluetooth = valorLimpio !== "" ? valorLimpio : moduloBTDefecto;
+        localStorage.setItem("rc_modulo_bt", window.moduloBluetooth);
+    };
+
     window.actualizarComandoBT = function(clave, valor) {
         const valorLimpio = valor ? valor.trim() : "";
         window.comandosBT[clave] = valorLimpio !== "" ? valorLimpio : comandosDefectoBT[clave];
         localStorage.setItem("rc_comandos_bt", JSON.stringify(window.comandosBT));
     };
 
-    // Guardar instrucciones de voz controlando campos vacíos
     window.actualizarInstruccionVoz = function(clave, valor) {
         const valorLimpio = valor ? valor.trim().toLowerCase() : "";
         window.instruccionesVoz[clave] = valorLimpio !== "" ? valorLimpio : instruccionesDefectoVoz[clave];
         localStorage.setItem("rc_instrucciones_voz", JSON.stringify(window.instruccionesVoz));
     };
 
-    // Inicializar configuración al cargar la app
     cargarConfiguracion();
 
-    // Gestión del Panel de Configuración (Modal)
     const panelConfig = document.getElementById('configuracion');
     const btnAbrirConfig = document.getElementById('BtnConfig');
     const btnCerrarConfig = document.getElementById('CerrarConfig');
@@ -81,7 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    // Obtener el plugin nativo de Capacitor
     function obtenerPluginBT() {
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AndroidBluetooth) {
             return window.Capacitor.Plugins.AndroidBluetooth;
@@ -89,22 +106,18 @@ document.addEventListener("DOMContentLoaded", () => {
         return null;
     }
 
-    // Función principal para transmitir datos (Con Anti-Saturación y Control Async)
     async function enviarComando(letra, forzar = false) {
         const comandoAEnviar = letra || window.comandosBT.detener || comandosDefectoBT.detener;
 
-        // 1. VALIDACIÓN DE CONEXIÓN
         if (!estaConectado) {
             if (estado) estado.textContent = "Error: Sin conexión Bluetooth";
             return;
         }
 
-        // 2. EVITAR ENVÍOS DUPLICADOS
         if (!forzar && comandoAEnviar === ultimoComandoEnviado) {
             return;
         }
 
-        // 3. SEMÁFORO DE ENVÍO (Evita colapsar la pila del plugin nativo)
         if (enviandoEnProceso) return;
 
         const Bluetooth = obtenerPluginBT();
@@ -127,41 +140,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Helper de asignación de control de precisión
     const asignarControl = (idElemento, comandoGetter) => {
         const btn = document.getElementById(idElemento);
         if (!btn) return;
 
-        // Iniciar movimiento al presionar
         const iniciarMovimiento = (e) => {
             e.preventDefault();
             enviarComando(comandoGetter());
         };
 
-        // Detener movimiento al retirar, cancelar o deslizar el dedo fuera
         const detenerMovimiento = (e) => {
             e.preventDefault();
             if (estaConectado) {
-                enviarComando(window.comandosBT.detener, true); // Forzar orden de PARAR
-                if (estado) estado.textContent = "HC-05 CONECTADO";
+                enviarComando(window.comandosBT.detener, true);
+                if (estado) estado.textContent = `${window.moduloBluetooth} CONECTADO`;
             }
         };
 
         btn.onpointerdown = iniciarMovimiento;
-        
-        // Escucha todos los eventos táctiles posibles para asegurar el envío de la parada
         btn.onpointerup = detenerMovimiento;
         btn.onpointercancel = detenerMovimiento;
         btn.onpointerleave = detenerMovimiento;
     };
 
-    // Asignar listeners a los botones de movimiento
     asignarControl("Adelante", () => window.comandosBT.adelante);
     asignarControl("Atras", () => window.comandosBT.atras);
     asignarControl("Izq", () => window.comandosBT.izquierda);
     asignarControl("Derecha", () => window.comandosBT.derecha);
 
-    // Botón Parar
     const btnParar = document.getElementById("Parar");
     if (btnParar) {
         btnParar.onpointerdown = (e) => {
@@ -170,7 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    // Botón Conectar
     const btnConectar = document.getElementById("Conectar");
     if (btnConectar) {
         btnConectar.onclick = async () => {
@@ -178,41 +183,114 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (Bluetooth) {
                 try {
-                    if (estado) estado.textContent = "Conectando al HC-05...";
-                    await Bluetooth.conectar();
+                    const inputElem = document.getElementById("modulo-bt");
+                    if (inputElem && inputElem.value.trim() !== "") {
+                        window.moduloBluetooth = inputElem.value.trim();
+                        localStorage.setItem("rc_modulo_bt", window.moduloBluetooth);
+                    }
+
+                    const nombreModuloTarget = window.moduloBluetooth || moduloBTDefecto;
+
+                    if (estado) estado.textContent = `Conectando a ${nombreModuloTarget}...`;
+                    
+                    await Bluetooth.conectar({ dispositivo: nombreModuloTarget });
+                    
                     estaConectado = true;
                     ultimoComandoEnviado = "";
-                    if (estado) estado.textContent = "HC-05 CONECTADO";
+                    if (estado) estado.textContent = `${nombreModuloTarget} CONECTADO`;
                 } catch (error) {
                     estaConectado = false;
-                    if (estado) estado.textContent = "Error de conexión: " + (error.message || error);
+                    
+                    const mensajeError = (error && error.message) ? error.message : String(error);
+                    const errorMinusculas = mensajeError.toLowerCase();
+
+                    if (
+                        errorMinusculas.includes("read failed") || 
+                        errorMinusculas.includes("socket") || 
+                        errorMinusculas.includes("timeout") ||
+                        errorMinusculas.includes("closed")
+                    ) {
+                        if (estado) {
+                            estado.textContent = `Error: Vincula '${window.moduloBluetooth}' en ajustes de tu teléfono primero`;
+                        }
+                    } else {
+                        if (estado) {
+                            estado.textContent = "Error: " + mensajeError;
+                        }
+                    }
                 }
             } else {
-                if (estado) estado.textContent = "Plugin Bluetooth no disponible";
+                if (estado) estado.textContent = "Plugin BT no disponible";
             }
         };
     }
 
-    // Botón Hablar (con reintento de fallback si el puente nativo tarda en cargar)
-    const btnHablar = document.getElementById("Hablar");
+    // --- MANEJO DEL BOTÓN HABLAR (CAPACITOR + WEB FALLBACK) ---
     if (btnHablar) {
-        btnHablar.onclick = () => {
-            if (window.AndroidVoz && typeof window.AndroidVoz.abrirMicrofono === "function") {
-                window.AndroidVoz.abrirMicrofono();
-            } else {
-                // Si la interfaz nativa aún no está lista, hace un segundo intento tras 300 ms
-                setTimeout(() => {
-                    if (window.AndroidVoz && typeof window.AndroidVoz.abrirMicrofono === "function") {
-                        window.AndroidVoz.abrirMicrofono();
-                    } else {
-                        if (textoVoz) textoVoz.textContent = "Error: micrófono no listo";
+        btnHablar.onclick = async () => {
+            const SpeechPlugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SpeechRecognition;
+
+            if (SpeechPlugin) {
+                try {
+                    // Verificación de permisos corregida (plural en la API de Capacitor)
+                    if (typeof SpeechPlugin.hasPermissions === 'function') {
+                        const checkPerms = await SpeechPlugin.hasPermissions();
+                        if (checkPerms.speechRecognition !== 'granted') {
+                            await SpeechPlugin.requestPermissions();
+                        }
                     }
-                }, 300);
+
+                    if (textoVoz) textoVoz.textContent = "Escuchando...";
+                    btnHablar.classList.add("escuchando");
+
+                    const result = await SpeechPlugin.start({
+                        language: "es-ES",
+                        maxResults: 1,
+                        prompt: "Di un comando",
+                        partialResults: false,
+                        popup: false
+                    });
+
+                    btnHablar.classList.remove("escuchando");
+
+                    if (result && result.matches && result.matches.length > 0) {
+                        window.procesarVozNativa(result.matches[0]);
+                    }
+                } catch (error) {
+                    btnHablar.classList.remove("escuchando");
+                    if (textoVoz) textoVoz.textContent = "Error de voz: " + (error.message || error);
+                }
+            } else {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'es-ES';
+
+                    recognition.onstart = () => {
+                        if (textoVoz) textoVoz.textContent = "Escuchando...";
+                        btnHablar.classList.add("escuchando");
+                    };
+
+                    recognition.onresult = (event) => {
+                        const comando = event.results[0][0].transcript;
+                        window.procesarVozNativa(comando);
+                    };
+
+                    recognition.onerror = (e) => {
+                        if (textoVoz) textoVoz.textContent = "Error: " + e.error;
+                        btnHablar.classList.remove("escuchando");
+                    };
+
+                    recognition.onend = () => btnHablar.classList.remove("escuchando");
+
+                    try { recognition.start(); } catch(e) { recognition.stop(); }
+                } else {
+                    if (textoVoz) textoVoz.textContent = "Voz no soportada en este dispositivo";
+                }
             }
         };
     }
 
-    // Reconocimiento de voz nativo
     window.procesarVozNativa = function(texto) {
         if (!texto) return;
         if (textoVoz) textoVoz.textContent = "Dijiste: " + texto;

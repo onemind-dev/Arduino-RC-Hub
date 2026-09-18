@@ -46,6 +46,17 @@
         </div>
         
         <div class="config-body">
+
+            <!-- Dispositivo Bluetooth -->
+            <fieldset class="config-group">
+                <legend>Módulo Bluetooth</legend>
+                <div class="input-group">
+                    <label for="modulo-bt">Nombre Dispositivo</label>
+                    <input type="text" id="modulo-bt" onchange="actualizarModuloBT(this.value)" placeholder="HC-05">
+                </div>
+            </fieldset>
+
+            <!-- Comandos Bluetooth -->
             <fieldset class="config-group">
                 <legend>Comandos Bluetooth</legend>
                 <div class="input-group">
@@ -70,6 +81,7 @@
                 </div>
             </fieldset>
 
+            <!-- Instrucciones de Voz -->
             <fieldset class="config-group">
                 <legend>Instrucciones de Voz</legend>
                 <div class="input-group">
@@ -93,6 +105,7 @@
                     <input type="text" id="voz-detener" placeholder="alto" oninput="actualizarInstruccionVoz('detener', this.value)">
                 </div>
             </fieldset>
+
         </div>
     </section>
 
